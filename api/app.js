@@ -1,10 +1,15 @@
 const express = require("express");
+require("dotenv").config();
+
+const postRouter = require("./routes/postRoutes");
+const commentRouter = require("./routes/commentRoutes");
 
 const app = express();
+app.use(express.json());
 
-app.get("/", (req, res) => res.send("hello world"));
-const PORT = 3000;
+app.use("/posts", postRouter);
+app.use("/comments", commentRouter);
 
-app.listen(PORT, () => {
-  console.log("Server running on port 3000");
-});
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT);
