@@ -5,8 +5,10 @@ const {
   updateComment,
   deleteComment,
 } = require("../controllers/commentController");
+
 const authMiddleware = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
+
 const router = express.Router();
 
 router.get("/", getAllComments);
