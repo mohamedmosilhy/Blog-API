@@ -5,11 +5,12 @@ const {
   updateComment,
   deleteComment,
 } = require("../controllers/commentController");
+const authMiddleware = require("../middleware/authMiddleware");
 const router = express.Router();
 
 router.get("/", getAllComments);
-router.post("/", createComment);
-router.put("/:id", updateComment);
-router.delete("/:id", deleteComment);
+router.post("/", authMiddleware, createComment);
+router.put("/:id", authMiddleware, updateComment);
+router.delete("/:id", authMiddleware, deleteComment);
 
 module.exports = router;

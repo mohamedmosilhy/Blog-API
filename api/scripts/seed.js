@@ -1,18 +1,26 @@
 require("dotenv").config();
 
 const prisma = require("../lib/prisma");
+const bcrypt = require("bcrypt");
 
 async function main() {
   await prisma.comment.deleteMany();
   await prisma.post.deleteMany();
   await prisma.user.deleteMany();
 
+  // Reset sequences in PostgreSQL
+  await prisma.$executeRawUnsafe(`ALTER SEQUENCE "User_id_seq" RESTART WITH 1`);
+  await prisma.$executeRawUnsafe(`ALTER SEQUENCE "Post_id_seq" RESTART WITH 1`);
+  await prisma.$executeRawUnsafe(
+    `ALTER SEQUENCE "Comment_id_seq" RESTART WITH 1`,
+  );
+
   const users = await Promise.all([
     prisma.user.create({
       data: {
         username: "mariam.hassan",
         email: "mariam.hassan@example.com",
-        password: "password123",
+        password: await bcrypt.hash("123456", 10),
         role: "AUTHOR",
       },
     }),
@@ -20,7 +28,7 @@ async function main() {
       data: {
         username: "ahmed.saleh",
         email: "ahmed.saleh@example.com",
-        password: "password123",
+        password: await bcrypt.hash("123456", 10),
         role: "AUTHOR",
       },
     }),
@@ -28,7 +36,7 @@ async function main() {
       data: {
         username: "sara.ali",
         email: "sara.ali@example.com",
-        password: "password123",
+        password: await bcrypt.hash("123456", 10),
         role: "USER",
       },
     }),
@@ -36,7 +44,7 @@ async function main() {
       data: {
         username: "youssef.mahdy",
         email: "youssef.mahdy@example.com",
-        password: "password123",
+        password: await bcrypt.hash("123456", 10),
         role: "USER",
       },
     }),

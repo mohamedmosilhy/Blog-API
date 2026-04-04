@@ -12,7 +12,8 @@ module.exports = {
 
   createComment: async (req, res) => {
     try {
-      const { content, postId, userId } = req.body;
+      const { content, postId } = req.body;
+      const userId = req.user.userId;
       if (!content || !postId || !userId) {
         return res.status(400).send({ message: "Missing fields" });
       }

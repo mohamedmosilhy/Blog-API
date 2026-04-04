@@ -33,7 +33,8 @@ module.exports = {
   },
   createPost: async (req, res) => {
     try {
-      const { title, content, published, authorId } = req.body;
+      const { title, content, published } = req.body;
+      const authorId = req.user.userId;
       if (!title || !content || published === undefined || !authorId) {
         return res.status(400).send({ message: "Missing fields" });
       }
