@@ -1,5 +1,13 @@
 const prisma = require("../lib/prisma");
 
+const safeUserSelect = {
+  id: true,
+  username: true,
+  role: true,
+  createdAt: true,
+  updatedAt: true,
+};
+
 module.exports = {
   getAllPosts: async (req, res) => {
     try {
@@ -15,16 +23,38 @@ module.exports = {
         posts = await prisma.post.findMany({
           where: { authorId },
           include: {
-            author: true,
-            comments: true,
+            author: {
+              select: safeUserSelect,
+            },
+            comments: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    username: true,
+                  },
+                },
+              },
+            },
           },
         });
       } else {
         posts = await prisma.post.findMany({
           where: { published: true },
           include: {
-            author: true,
-            comments: true,
+            author: {
+              select: safeUserSelect,
+            },
+            comments: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    username: true,
+                  },
+                },
+              },
+            },
           },
         });
       }
@@ -145,8 +175,19 @@ module.exports = {
         },
         where: { id: postId },
         include: {
-          author: true,
-          comments: true,
+          author: {
+            select: safeUserSelect,
+          },
+          comments: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  username: true,
+                },
+              },
+            },
+          },
         },
       });
       res.send(post);
