@@ -21,7 +21,6 @@ module.exports = {
         }
 
         posts = await prisma.post.findMany({
-          where: { authorId },
           include: {
             author: {
               select: safeUserSelect,

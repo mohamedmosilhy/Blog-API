@@ -1,4 +1,5 @@
 var jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const prisma = require("../lib/prisma");
 const bcrypt = require("bcrypt");
 
@@ -24,7 +25,7 @@ module.exports = {
       const token = jwt.sign(
         { userId: user.id, role: user.role },
         process.env.JWT_SECRET || "dev_secret",
-        { expiresIn: "1d" },
+        { expiresIn: "1d", jwtid: crypto.randomUUID() },
       );
 
       res.send({ token });

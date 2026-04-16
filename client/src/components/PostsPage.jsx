@@ -57,7 +57,10 @@ const PostsPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("/posts");
+        const token = localStorage.getItem("token");
+        const response = await fetch("/posts", {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
         if (!response.ok) {
           throw new Error("Network response was not ok");
         }

@@ -27,7 +27,6 @@ const LoginPage = () => {
       if (!response.ok) {
         throw new Error(result.message || "Login failed");
       }
-
       localStorage.setItem("token", result.token);
       navigate("/");
     } catch (submitError) {
