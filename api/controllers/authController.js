@@ -28,7 +28,7 @@ module.exports = {
         { expiresIn: "1d", jwtid: crypto.randomUUID() },
       );
 
-      res.send({ token });
+      res.send({ token, role: user.role, username: user.username });
     } catch (error) {
       res.status(500).send({ message: "Something went wrong" });
     }

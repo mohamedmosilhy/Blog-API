@@ -7,6 +7,30 @@ const PostsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [commentInputs, setCommentInputs] = useState({});
+  const [authInfo, setAuthInfo] = useState(() => ({
+    token: localStorage.getItem("token"),
+    username: localStorage.getItem("username"),
+    role: localStorage.getItem("role"),
+  }));
+
+  const getRoleLabel = (role) => {
+    if (role === "AUTHOR") {
+      return "Admin";
+    }
+
+    if (role === "USER") {
+      return "Client";
+    }
+
+    return "Client";
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    localStorage.removeItem("role");
+    setAuthInfo({ token: null, username: "", role: "" });
+  };
 
   const handleAddingComment = async (event, post) => {
     event.preventDefault();
@@ -65,7 +89,7 @@ const PostsPage = () => {
           throw new Error("Network response was not ok");
         }
         const res = await response.json();
-        setData(res);
+        setData(res.filter((post) => post.published));
       } catch (err) {
         setError(err.message);
       } finally {
@@ -103,26 +127,53 @@ const PostsPage = () => {
   return (
     <div className="page-shell">
       <div className="mx-auto max-w-5xl px-4 py-8 md:px-8 md:py-10">
-        <header className="mb-8 overflow-hidden rounded-3xl border border-white/40 bg-white/70 p-6 shadow-lg backdrop-blur md:p-8">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-brand-copper">
-            Community Feed
-          </p>
-          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <header className="mb-8 overflow-hidden rounded-3xl border border-white/40 bg-white/75 p-6 shadow-lg backdrop-blur md:p-8">
+          <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <div>
-              <h1 className="font-display text-3xl text-ink md:text-5xl">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-brand-copper">
+                Community Feed
+              </p>
+              <h1 className="font-display text-3xl leading-tight text-ink md:text-5xl">
                 Blog Stories & Discussions
               </h1>
               <p className="mt-2 max-w-2xl text-sm text-ink-soft md:text-base">
                 Read fresh posts and join the conversation by adding your own
                 comments.
               </p>
+              <div className="mt-4 inline-flex items-center rounded-full border border-line bg-white/80 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-ink-soft">
+                {data.length} Published Post{data.length === 1 ? "" : "s"}
+              </div>
             </div>
-            <Link
-              to="/login"
-              className="inline-flex items-center justify-center rounded-full border border-brand-teal bg-brand-teal px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:brightness-95"
-            >
-              Login
-            </Link>
+
+            <div className="w-full rounded-2xl border border-line bg-white/85 p-4 shadow-sm md:w-auto md:min-w-64">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brand-copper">
+                Current Session
+              </p>
+              <span className="mt-2 inline-flex items-center rounded-full border border-line bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-ink-soft">
+                {authInfo.token
+                  ? `${authInfo.username || "Signed in"} · ${getRoleLabel(authInfo.role)}`
+                  : "Guest · Client"}
+              </span>
+
+              <div className="mt-3">
+                {authInfo.token ? (
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="inline-flex w-full items-center justify-center rounded-full border border-brand-teal bg-brand-teal px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:brightness-95"
+                  >
+                    Logout
+                  </button>
+                ) : (
+                  <Link
+                    to="/login"
+                    className="inline-flex w-full items-center justify-center rounded-full border border-brand-teal bg-brand-teal px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:brightness-95"
+                  >
+                    Login
+                  </Link>
+                )}
+              </div>
+            </div>
           </div>
         </header>
 

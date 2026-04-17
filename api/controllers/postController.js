@@ -9,59 +9,66 @@ const safeUserSelect = {
 };
 
 module.exports = {
-  getAllPosts: async (req, res) => {
+  getAllPostsClient: async (req, res) => {
     try {
-      let posts;
-
-      if (req.user?.role === "AUTHOR") {
-        const authorId = Number.parseInt(req.user.userId, 10);
-
-        if (Number.isNaN(authorId)) {
-          return res.status(400).send({ message: "Invalid author id" });
-        }
-
-        posts = await prisma.post.findMany({
-          include: {
-            author: {
-              select: safeUserSelect,
-            },
-            comments: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    username: true,
-                  },
+      const posts = await prisma.post.findMany({
+        where: { published: true },
+        include: {
+          author: {
+            select: safeUserSelect,
+          },
+          comments: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  username: true,
                 },
               },
             },
           },
-        });
-      } else {
-        posts = await prisma.post.findMany({
-          where: { published: true },
-          include: {
-            author: {
-              select: safeUserSelect,
-            },
-            comments: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    username: true,
-                  },
-                },
-              },
-            },
-          },
-        });
-      }
+        },
+      });
+
       res.send(posts);
     } catch (error) {
       res.status(500).send({ message: "Something Went Wrong" });
     }
   },
+
+  getAllPostsAdmin: async (req, res) => {
+    try {
+      const authorId = Number.parseInt(req.user.userId, 10);
+
+      if (Number.isNaN(authorId)) {
+        return res.status(400).send({ message: "Invalid author id" });
+      }
+
+      const posts = await prisma.post.findMany({
+        where: { authorId },
+        include: {
+          author: {
+            select: safeUserSelect,
+          },
+          comments: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  username: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      res.send(posts);
+    } catch (error) {
+      res.status(500).send({ message: "Something Went Wrong" });
+    }
+  },
+
   getPostById: async (req, res) => {
     try {
       const postId = Number.parseInt(req.params.id, 10);

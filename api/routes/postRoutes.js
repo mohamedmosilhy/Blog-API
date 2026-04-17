@@ -1,7 +1,8 @@
 const express = require("express");
 
 const {
-  getAllPosts,
+  getAllPostsClient,
+  getAllPostsAdmin,
   getPostById,
   createPost,
   updatePost,
@@ -13,7 +14,13 @@ const optionalAuthMiddleware = require("../middleware/optionalAuthMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
 const router = express.Router();
 
-router.get("/", optionalAuthMiddleware, getAllPosts);
+router.get("/", optionalAuthMiddleware, getAllPostsClient);
+router.get(
+  "/my-posts",
+  authMiddleware,
+  roleMiddleware("AUTHOR"),
+  getAllPostsAdmin,
+);
 router.get("/:id", getPostById);
 router.patch(
   "/:id/publish",

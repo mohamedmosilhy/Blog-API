@@ -1,1 +1,118 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
+
+:root {
+  --paper: #fcf8f1;
+  --paper-deep: #f4ecdf;
+  --ink: #1f2a2f;
+  --ink-soft: #4e5d63;
+  --brand-teal: #0f766e;
+  --brand-copper: #b45309;
+  --line: #d7d2c8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  font-family: "Manrope", "Segoe UI", sans-serif;
+  background:
+    radial-gradient(
+      circle at 20% 10%,
+      rgba(15, 118, 110, 0.2),
+      transparent 36%
+    ),
+    radial-gradient(circle at 85% 15%, rgba(180, 83, 9, 0.18), transparent 28%),
+    linear-gradient(160deg, var(--paper) 0%, var(--paper-deep) 100%);
+}
+
+.font-display {
+  font-family: "Fraunces", Georgia, serif;
+}
+
+.text-ink {
+  color: var(--ink);
+}
+
+.text-ink-soft {
+  color: var(--ink-soft);
+}
+
+.text-brand-copper {
+  color: var(--brand-copper);
+}
+
+.text-brand-teal {
+  color: var(--brand-teal);
+}
+
+.border-line {
+  border-color: var(--line);
+}
+
+.border-brand-teal {
+  border-color: var(--brand-teal);
+}
+
+.bg-paper {
+  background-color: var(--paper);
+}
+
+.bg-brand-teal {
+  background-color: var(--brand-teal);
+}
+
+.focus-brand:focus {
+  border-color: var(--brand-teal);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand-teal) 25%, transparent);
+}
+
+.page-shell {
+  position: relative;
+}
+
+.page-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.18;
+  background-image: linear-gradient(
+    45deg,
+    transparent 0 48%,
+    rgba(31, 42, 47, 0.08) 49% 51%,
+    transparent 52% 100%
+  );
+  background-size: 16px 16px;
+}
+
+.fade-rise {
+  animation: fade-rise 400ms ease both;
+}
+
+@keyframes fade-rise {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-shell::before {
+    opacity: 0.12;
+  }
+}
