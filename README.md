@@ -39,7 +39,6 @@ A modern blogging platform built with **Node.js**, **React**, **Express**, **Pri
 - **Smooth Navigation** using React Router v7
 - **Real-Time UI Updates** without page reloads
 
-
 ---
 
 ## 🛠 Tech Stack
