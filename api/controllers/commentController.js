@@ -117,13 +117,23 @@ module.exports = {
 
       const comment = await prisma.comment.findUnique({
         where: { id: commentId },
+        include: {
+          post: {
+            select: {
+              authorId: true,
+            },
+          },
+        },
       });
 
       if (!comment) {
         return res.status(404).send({ message: "comment not found" });
       }
 
-      if (comment.userId !== userId) {
+      const isCommentOwner = comment.userId === userId;
+      const isPostOwner = comment.post?.authorId === userId;
+
+      if (!isCommentOwner && !isPostOwner) {
         return res.status(403).send({ message: "forbidden" });
       }
 

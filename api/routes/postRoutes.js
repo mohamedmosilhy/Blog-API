@@ -21,7 +21,7 @@ router.get(
   roleMiddleware("AUTHOR"),
   getAllPostsAdmin,
 );
-router.get("/:id", getPostById);
+router.get("/:id", authMiddleware, roleMiddleware("AUTHOR"), getPostById);
 router.patch(
   "/:id/publish",
   authMiddleware,

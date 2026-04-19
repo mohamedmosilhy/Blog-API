@@ -33,6 +33,6 @@ app.use("/posts", postRouter);
 app.use("/comments", commentRouter);
 app.use("/auth", loginRouter);
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 
 app.listen(PORT);

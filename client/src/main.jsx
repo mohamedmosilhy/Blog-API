@@ -10,9 +10,6 @@ const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
 ]);
 
-// delete this at final, just for testing purposes to avoid using old token after changes in auth logic
-localStorage.clear();
-
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <RouterProvider router={router} />

@@ -226,9 +226,14 @@ module.exports = {
         return res.status(403).send({ message: "forbidden" });
       }
 
-      await prisma.post.delete({
-        where: { id: postId },
-      });
+      await prisma.$transaction([
+        prisma.comment.deleteMany({
+          where: { postId },
+        }),
+        prisma.post.delete({
+          where: { id: postId },
+        }),
+      ]);
 
       res.send({ message: "Post deleted" });
     } catch (error) {
