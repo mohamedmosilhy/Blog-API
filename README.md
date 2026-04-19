@@ -6,6 +6,26 @@ A modern blogging platform built with **Node.js**, **React**, **Express**, **Pri
 
 ---
 
+## 📸 Screenshots
+
+### Client
+
+![Client Home](./screenshots/client/homeClient.png)
+![Client Login](./screenshots/client/loginClient.png)
+
+### Admin
+
+![Admin Login](./screenshots/admin/loginAdmin.png)
+![Admin Dashboard](./screenshots/admin/dashaboardAdmin.png)
+![Create Post](./screenshots/admin/createPostAdmin.png)
+![Edit Post](./screenshots/admin/editPostAdmin.png)
+
+### Database
+
+![Database](./screenshots/database/database.png)
+
+---
+
 ## ✨ Features
 
 ### 🔐 Authentication & Authorization
@@ -337,12 +357,6 @@ Blog-API/
 │
 └── README.md
 ```
-
----
-
-## 🎬 Demo
-
-Add screenshots and video links here.
 
 ---
 
