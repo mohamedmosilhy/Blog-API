@@ -12,6 +12,9 @@ A modern blogging platform built with **Node.js**, **React**, **Express**, **Pri
 
 ![Client Home](./screenshots/client/homeClient.png)
 ![Client Login](./screenshots/client/loginClient.png)
+![Client Register](./screenshots/client/registerClient.png)
+![Client Comments](./screenshots/client/commentClient.png)
+![Edit Comment Modal](./screenshots/client/editCommentClient.png)
 
 ### Admin
 
@@ -49,6 +52,9 @@ A modern blogging platform built with **Node.js**, **React**, **Express**, **Pri
 - **View Comments** with commenter information
 - **Delete Comments** (by comment owner or post author)
 - **Comment Moderation** for post owners
+- **Edit Comments** with a beautiful modal interface
+- **Real-time Updates** when comments are modified
+- **Self-Service Registration** with automatic session establishment
 
 ### 🎨 User Interface
 
