@@ -165,12 +165,20 @@ const PostsPage = () => {
                     Logout
                   </button>
                 ) : (
-                  <Link
-                    to="/login"
-                    className="inline-flex w-full items-center justify-center rounded-full border border-brand-teal bg-brand-teal px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:brightness-95"
-                  >
-                    Login
-                  </Link>
+                  <div className="flex flex-col gap-3">
+                    <Link
+                      to="/login"
+                      className="inline-flex w-full items-center justify-center rounded-full border border-brand-teal bg-brand-teal px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:brightness-95"
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      to="/register"
+                      className="inline-flex w-full items-center justify-center rounded-full border border-brand-teal bg-brand-teal px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:brightness-95"
+                    >
+                      Register
+                    </Link>
+                  </div>
                 )}
               </div>
             </div>

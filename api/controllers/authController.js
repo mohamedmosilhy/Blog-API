@@ -33,5 +33,32 @@ module.exports = {
       res.status(500).send({ message: "Something went wrong" });
     }
   },
-  register: async (req, res) => {},
+  register: async (req, res) => {
+    try {
+      const { email, password, username } = req.body;
+
+      if (!email || !password || !username) {
+        return res.status(400).send({ message: "Missing fields" });
+      }
+
+      if (await prisma.user.findUnique({ where: { email } })) {
+        return res.status(401).send({ message: "That Email exists already" });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      await prisma.user.create({
+        data: {
+          username: username,
+          email: email,
+          password: hashedPassword,
+          role: "USER",
+        },
+      });
+
+      res.send({ username, email });
+    } catch (error) {
+      res.status(500).send({ message: "Something went wrong" });
+    }
+  },
 };
