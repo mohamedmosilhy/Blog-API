@@ -7,10 +7,13 @@ const PostsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [commentInputs, setCommentInputs] = useState({});
+  const [editingComment, setEditingComment] = useState(null);
+  const [editingContent, setEditingContent] = useState("");
   const [authInfo, setAuthInfo] = useState(() => ({
     token: localStorage.getItem("token"),
     username: localStorage.getItem("username"),
     role: localStorage.getItem("role"),
+    id: localStorage.getItem("id"),
   }));
 
   const getRoleLabel = (role) => {
@@ -29,7 +32,86 @@ const PostsPage = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("username");
     localStorage.removeItem("role");
-    setAuthInfo({ token: null, username: "", role: "" });
+    localStorage.removeItem("id");
+    setAuthInfo({ token: null, username: "", role: "", id: "" });
+  };
+
+  const handleEditComment = async (comment) => {
+    setEditingComment(comment);
+    setEditingContent(comment.content);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingComment) return;
+
+    const trimmedComment = editingContent.trim();
+    if (!trimmedComment) {
+      alert("Comment content cannot be empty.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`/comments/${editingComment.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authInfo.token}`,
+        },
+        body: JSON.stringify({ content: trimmedComment }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update comment");
+      }
+
+      const updatedComment = await response.json();
+
+      setData((prevPosts) =>
+        prevPosts.map((post) => ({
+          ...post,
+          comments: post.comments.map((c) =>
+            c.id === editingComment.id ? updatedComment : c,
+          ),
+        })),
+      );
+
+      setEditingComment(null);
+      setEditingContent("");
+    } catch (error) {
+      alert(error.message || "Something went wrong");
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingComment(null);
+    setEditingContent("");
+  };
+  const handleDeleteComment = async (comment) => {
+    if (!window.confirm("Are you sure you want to delete this comment?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/comments/${comment.id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${authInfo.token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete comment");
+      }
+
+      setData((prevPosts) =>
+        prevPosts.map((post) => ({
+          ...post,
+          comments: post.comments.filter((c) => c.id !== comment.id),
+        })),
+      );
+    } catch (error) {
+      alert(error.message || "Something went wrong");
+    }
   };
 
   const handleAddingComment = async (event, post) => {
@@ -225,6 +307,23 @@ const PostsPage = () => {
                           <p className="mt-1 text-xs font-medium uppercase tracking-[0.08em] text-brand-copper">
                             By {comment.user?.username || "Unknown"}
                           </p>
+
+                          {comment.user?.id === Number(authInfo.id) && (
+                            <div className="mt-3 flex gap-2">
+                              <button
+                                onClick={() => handleEditComment(comment)}
+                                className="flex-1 rounded-lg border border-brand-teal bg-brand-teal/10 px-3 py-1.5 text-sm font-semibold text-brand-teal transition hover:bg-brand-teal/20 active:scale-95"
+                              >
+                                ✏️ Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteComment(comment)}
+                                className="flex-1 rounded-lg border border-red-400 bg-red-50/50 px-3 py-1.5 text-sm font-semibold text-red-600 transition hover:bg-red-100 active:scale-95"
+                              >
+                                🗑️ Delete
+                              </button>
+                            </div>
+                          )}
                         </div>
                       ))
                     )}
@@ -267,6 +366,49 @@ const PostsPage = () => {
           </ul>
         )}
       </div>
+
+      {/* Edit Comment Modal */}
+      {editingComment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-white/40 bg-white/95 p-6 shadow-2xl">
+            <h2 className="mb-4 font-display text-2xl font-bold text-ink">
+              Edit Your Comment
+            </h2>
+
+            <div className="mb-4">
+              <label
+                className="mb-2 block text-sm font-semibold text-ink"
+                htmlFor="edit-comment-input"
+              >
+                Comment Text
+              </label>
+              <textarea
+                id="edit-comment-input"
+                value={editingContent}
+                onChange={(e) => setEditingContent(e.target.value)}
+                className="w-full rounded-xl border border-line bg-white px-4 py-3 text-ink outline-none transition focus:border-brand-teal focus:ring-2 focus:ring-(--brand-teal)/25"
+                rows="4"
+                placeholder="Edit your comment..."
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleCancelEdit}
+                className="flex-1 rounded-lg border border-line bg-white/50 px-4 py-2.5 font-semibold text-ink transition hover:bg-white/75 active:scale-95"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                className="flex-1 rounded-lg bg-brand-teal px-4 py-2.5 font-semibold text-white transition hover:-translate-y-0.5 hover:brightness-95 active:scale-95"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

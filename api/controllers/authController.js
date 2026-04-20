@@ -28,7 +28,12 @@ module.exports = {
         { expiresIn: "1d", jwtid: crypto.randomUUID() },
       );
 
-      res.send({ token, role: user.role, username: user.username });
+      res.send({
+        token,
+        role: user.role,
+        username: user.username,
+        id: user.id,
+      });
     } catch (error) {
       res.status(500).send({ message: "Something went wrong" });
     }
@@ -47,7 +52,7 @@ module.exports = {
 
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      await prisma.user.create({
+      const user = await prisma.user.create({
         data: {
           username: username,
           email: email,
@@ -56,7 +61,7 @@ module.exports = {
         },
       });
 
-      res.send({ username, email });
+      res.send({ username, email, id: user.id });
     } catch (error) {
       res.status(500).send({ message: "Something went wrong" });
     }

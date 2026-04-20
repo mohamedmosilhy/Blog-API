@@ -30,6 +30,7 @@ const LoginPage = () => {
       localStorage.setItem("token", result.token);
       localStorage.setItem("username", result.username || "");
       localStorage.setItem("role", result.role || "");
+      localStorage.setItem("id", result.id || "");
       navigate("/");
     } catch (submitError) {
       setError(submitError.message || "Something went wrong");

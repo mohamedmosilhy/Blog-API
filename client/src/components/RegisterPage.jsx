@@ -48,6 +48,7 @@ const RegisterPage = () => {
       localStorage.setItem("token", loginResult.token);
       localStorage.setItem("username", loginResult.username || "");
       localStorage.setItem("role", loginResult.role || "");
+      localStorage.setItem("id", loginResult.id || "");
       navigate("/");
     } catch (submitError) {
       setError(submitError.message || "Something went wrong");
