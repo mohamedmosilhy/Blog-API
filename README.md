@@ -7,11 +7,7 @@ A modern blogging platform built with **Node.js**, **React**, **Express**, **Pri
 ---
 
 ## 🎬 Demo
-
-<video src="https://raw.githubusercontent.com/mohamedmosilhy/Blog-API/main/screenshots/demo.mp4" controls width="100%">
-  Your browser does not support the video tag. You can download the demo
-  <a href="https://raw.githubusercontent.com/mohamedmosilhy/Blog-API/main/screenshots/demo.mp4">here</a>.
-</video>
+[https://github.com/mohamedmosilhy/Blog-API/blob/main/screenshots/demo.mp4](https://github.com/user-attachments/assets/fba4db24-95df-4810-a551-119a83b12fb5)
 
 ---
 
