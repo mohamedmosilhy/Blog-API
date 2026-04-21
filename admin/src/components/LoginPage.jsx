@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router";
+import { api } from "../../api/api";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -14,19 +15,10 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      const response = await fetch("/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
+      const { data: res } = await api.post("/auth/login", {
+        email,
+        password,
       });
-
-      const res = await response.json();
-
-      if (!response.ok) {
-        throw new Error(res.message || "Login failed");
-      }
 
       if (res.role === "AUTHOR") {
         localStorage.setItem("token", res.token);
@@ -37,7 +29,11 @@ const LoginPage = () => {
         throw new Error(res.message || "Login failed");
       }
     } catch (submitError) {
-      setError(submitError.message || "Something went wrong");
+      setError(
+        submitError.response?.data?.message ||
+          submitError.message ||
+          "Something went wrong",
+      );
     } finally {
       setLoading(false);
     }

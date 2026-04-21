@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router";
+import { api } from "../../api/api";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -15,35 +16,12 @@ const RegisterPage = () => {
     setLoading(true);
 
     try {
-      const registerResponse = await fetch("/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password, username }),
+      await api.post("/auth/register", { email, password, username });
+
+      const { data: loginResult } = await api.post("/auth/login", {
+        email,
+        password,
       });
-
-      const registerResult = await registerResponse.json();
-
-      if (!registerResponse.ok) {
-        throw new Error(registerResult.message || "Registration failed");
-      }
-
-      const loginResponse = await fetch("/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const loginResult = await loginResponse.json();
-
-      if (!loginResponse.ok) {
-        throw new Error(
-          loginResult.message || "Login after registration failed",
-        );
-      }
 
       localStorage.setItem("token", loginResult.token);
       localStorage.setItem("username", loginResult.username || "");
@@ -51,7 +29,11 @@ const RegisterPage = () => {
       localStorage.setItem("id", loginResult.id || "");
       navigate("/");
     } catch (submitError) {
-      setError(submitError.message || "Something went wrong");
+      setError(
+        submitError.response?.data?.message ||
+          submitError.message ||
+          "Something went wrong",
+      );
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,7 @@
 import React from "react";
 import { useEffect } from "react";
 import { Link, useNavigate } from "react-router";
+import { api } from "../../api/api";
 
 const MyPosts = () => {
   const [posts, setPosts] = React.useState([]);
@@ -25,16 +26,11 @@ const MyPosts = () => {
 
   const handlePublish = async (id) => {
     try {
-      const response = await fetch(`/posts/${id}/publish`, {
-        method: "PATCH",
+      await api.patch(`/posts/${id}/publish`, null, {
         headers: {
           Authorization: `Bearer ${authInfo.token}`,
         },
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to update the state of publishing the post");
-      }
 
       setPosts((posts) =>
         posts.map((post) =>
@@ -48,16 +44,11 @@ const MyPosts = () => {
 
   const handleDelete = async (id) => {
     try {
-      const response = await fetch(`/posts/${id}`, {
-        method: "DELETE",
+      await api.delete(`/posts/${id}`, {
         headers: {
           Authorization: `Bearer ${authInfo.token}`,
         },
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete post");
-      }
 
       setPosts((posts) => posts.filter((post) => post.id !== id));
     } catch (error) {
@@ -67,16 +58,11 @@ const MyPosts = () => {
 
   const handleDeleteComment = async (postId, commentId) => {
     try {
-      const response = await fetch(`/comments/${commentId}`, {
-        method: "DELETE",
+      await api.delete(`/comments/${commentId}`, {
         headers: {
           Authorization: `Bearer ${authInfo.token}`,
         },
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete comment");
-      }
 
       setPosts((currentPosts) =>
         currentPosts.map((post) =>
@@ -110,18 +96,17 @@ const MyPosts = () => {
         return;
       }
 
-      const response = await fetch("/posts/my-posts", {
-        headers: {
-          Authorization: `Bearer ${authInfo.token}`,
-        },
-      });
+      try {
+        const { data: posts } = await api.get("/posts/my-posts", {
+          headers: {
+            Authorization: `Bearer ${authInfo.token}`,
+          },
+        });
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch posts");
+        setPosts(posts);
+      } catch (error) {
+        console.log(error);
       }
-
-      const posts = await response.json();
-      setPosts(posts);
     };
 
     fetchPosts();

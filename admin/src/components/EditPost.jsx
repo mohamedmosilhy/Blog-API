@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
+import { api } from "../../api/api";
 
 const EditPost = () => {
   const { id } = useParams();
@@ -11,20 +12,19 @@ const EditPost = () => {
 
   useEffect(() => {
     const fetchPost = async () => {
-      const response = await fetch(`/posts/${id}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      try {
+        const { data: res } = await api.get(`/posts/${id}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
 
-      if (!response.ok) {
-        throw new Error("Failed to load post");
+        setTitle(res.title);
+        setContent(res.content);
+        setpublished(res.published);
+      } catch (error) {
+        console.error(error);
       }
-
-      const res = await response.json();
-      setTitle(res.title);
-      setContent(res.content);
-      setpublished(res.published);
     };
 
     fetchPost();
@@ -33,17 +33,15 @@ const EditPost = () => {
   const handleEditingPost = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`/posts/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+      await api.put(
+        `/posts/${id}`,
+        { title, content, published },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         },
-        body: JSON.stringify({ title, content, published }),
-      });
-      if (!response.ok) {
-        throw new Error("Failed to update post");
-      }
+      );
       navigate("/dashboard");
     } catch (error) {
       console.log(error);

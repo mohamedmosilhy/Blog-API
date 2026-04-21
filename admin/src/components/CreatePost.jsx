@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router";
+import { api } from "../../api/api";
 
 const CreatePost = () => {
   const [title, setTitle] = useState("");
@@ -10,18 +11,15 @@ const CreatePost = () => {
   const handleCreatingPost = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch("/posts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+      await api.post(
+        "/posts",
+        { title, content, published },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         },
-        body: JSON.stringify({ title, content, published }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to create post");
-      }
+      );
 
       navigate("/dashboard");
     } catch (error) {

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
+import { api } from "../../api/api";
 
 const PostsPage = () => {
   const navigate = useNavigate();
@@ -51,20 +52,15 @@ const PostsPage = () => {
     }
 
     try {
-      const response = await fetch(`/comments/${editingComment.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authInfo.token}`,
+      const { data: updatedComment } = await api.put(
+        `/comments/${editingComment.id}`,
+        { content: trimmedComment },
+        {
+          headers: {
+            Authorization: `Bearer ${authInfo.token}`,
+          },
         },
-        body: JSON.stringify({ content: trimmedComment }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update comment");
-      }
-
-      const updatedComment = await response.json();
+      );
 
       setData((prevPosts) =>
         prevPosts.map((post) => ({
@@ -92,16 +88,11 @@ const PostsPage = () => {
     }
 
     try {
-      const response = await fetch(`/comments/${comment.id}`, {
-        method: "DELETE",
+      await api.delete(`/comments/${comment.id}`, {
         headers: {
           Authorization: `Bearer ${authInfo.token}`,
         },
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete comment");
-      }
 
       setData((prevPosts) =>
         prevPosts.map((post) => ({
@@ -131,20 +122,15 @@ const PostsPage = () => {
     }
 
     try {
-      const response = await fetch("/comments", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const { data: result } = await api.post(
+        "/comments",
+        { content, postId: post.id },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-        body: JSON.stringify({ content, postId: post.id }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Failed to add comment");
-      }
+      );
 
       setError(null);
       setCommentInputs((prev) => ({ ...prev, [post.id]: "" }));
@@ -164,13 +150,9 @@ const PostsPage = () => {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch("/posts", {
+        const { data: res } = await api.get("/posts", {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-        const res = await response.json();
         setData(res.filter((post) => post.published));
       } catch (err) {
         setError(err.message);
