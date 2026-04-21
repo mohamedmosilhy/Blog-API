@@ -6,6 +6,12 @@ A modern blogging platform built with **Node.js**, **React**, **Express**, **Pri
 
 ---
 
+## 🎬 Demo
+
+<video src="./screenshots/demo.mp4" controls width="100%" autoplay muted></video>
+
+---
+
 ## 📸 Screenshots
 
 ### Client
