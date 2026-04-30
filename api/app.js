@@ -1,12 +1,20 @@
 const express = require("express");
 require("dotenv").config();
+const rateLimit = require("express-rate-limit");
 
 const postRouter = require("./routes/postRoutes");
 const commentRouter = require("./routes/commentRoutes");
 const loginRouter = require("./routes/authRoutes");
 
 const app = express();
+
 app.use(express.json());
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+  }),
+);
 
 app.use((req, res, next) => {
   const origin = req.headers.origin;

@@ -8,11 +8,12 @@ const {
 
 const authMiddleware = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
+const { commentLimiter } = require("../middleware/rateLimiters");
 
 const router = express.Router();
 
 router.get("/", getAllComments);
-router.post("/", authMiddleware, createComment);
+router.post("/", commentLimiter, authMiddleware, createComment);
 router.put("/:id", authMiddleware, updateComment);
 router.delete("/:id", authMiddleware, deleteComment);
 
