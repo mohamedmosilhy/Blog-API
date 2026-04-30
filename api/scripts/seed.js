@@ -3,6 +3,127 @@ require("dotenv").config();
 const prisma = require("../lib/prisma");
 const bcrypt = require("bcrypt");
 
+const SEED_CONFIG = {
+  authors: 10,
+  users: 40,
+  posts: 180,
+  comments: 1200,
+};
+
+const samplePostTopics = [
+  "Express API design",
+  "Prisma query patterns",
+  "Database indexing basics",
+  "Route-level authorization",
+  "Pagination strategies",
+  "Error handling in Node",
+  "Validation with middleware",
+  "Testing REST endpoints",
+  "Rate limiting best practices",
+  "Refactoring controllers",
+];
+
+const sampleCommentPhrases = [
+  "This was very useful, thank you!",
+  "I applied this and it improved my endpoint behavior.",
+  "Clear explanation. Would love a deeper example next.",
+  "Great write-up and practical tips.",
+  "This saved me from a bug in production-like testing.",
+  "Nice breakdown. The structure is easy to follow.",
+  "I had the same issue, this approach fixed it for me.",
+  "Helpful guide, especially the validation part.",
+  "Can you add a sequel focused on performance tuning?",
+  "Excellent overview with realistic examples.",
+];
+
+const pick = (items, index) => items[index % items.length];
+
+const buildUsers = (passwordHash) => {
+  const baseUsers = [
+    {
+      username: "mariam.hassan",
+      email: "mariam.hassan@example.com",
+      password: passwordHash,
+      role: "AUTHOR",
+    },
+    {
+      username: "ahmed.saleh",
+      email: "ahmed.saleh@example.com",
+      password: passwordHash,
+      role: "AUTHOR",
+    },
+    {
+      username: "sara.ali",
+      email: "sara.ali@example.com",
+      password: passwordHash,
+      role: "USER",
+    },
+    {
+      username: "youssef.mahdy",
+      email: "youssef.mahdy@example.com",
+      password: passwordHash,
+      role: "USER",
+    },
+  ];
+
+  const generatedAuthors = Array.from(
+    { length: SEED_CONFIG.authors },
+    (_, index) => {
+      const number = index + 1;
+      return {
+        username: `author${number}`,
+        email: `author${number}@example.com`,
+        password: passwordHash,
+        role: "AUTHOR",
+      };
+    },
+  );
+
+  const generatedUsers = Array.from(
+    { length: SEED_CONFIG.users },
+    (_, index) => {
+      const number = index + 1;
+      return {
+        username: `user${number}`,
+        email: `user${number}@example.com`,
+        password: passwordHash,
+        role: "USER",
+      };
+    },
+  );
+
+  return [...baseUsers, ...generatedAuthors, ...generatedUsers];
+};
+
+const buildPosts = (authors) =>
+  Array.from({ length: SEED_CONFIG.posts }, (_, index) => {
+    const topic = pick(samplePostTopics, index);
+    const author = authors[index % authors.length];
+    const postNumber = index + 1;
+
+    return {
+      title: `${topic} #${postNumber}`,
+      content:
+        `Post ${postNumber}: A concise walkthrough of ${topic.toLowerCase()} for practical backend workflows. ` +
+        "It includes implementation notes, common pitfalls, and production-minded tips.",
+      published: postNumber % 4 !== 0,
+      authorId: author.id,
+    };
+  });
+
+const buildComments = (posts, users) =>
+  Array.from({ length: SEED_CONFIG.comments }, (_, index) => {
+    const post = posts[index % posts.length];
+    const user = users[(index * 7) % users.length];
+    const phrase = pick(sampleCommentPhrases, index);
+
+    return {
+      content: `Comment ${index + 1}: ${phrase}`,
+      postId: post.id,
+      userId: user.id,
+    };
+  });
+
 async function main() {
   await prisma.comment.deleteMany();
   await prisma.post.deleteMany();
@@ -15,124 +136,36 @@ async function main() {
     `ALTER SEQUENCE "Comment_id_seq" RESTART WITH 1`,
   );
 
-  const users = await Promise.all([
-    prisma.user.create({
-      data: {
-        username: "mariam.hassan",
-        email: "mariam.hassan@example.com",
-        password: await bcrypt.hash("123456", 10),
-        role: "AUTHOR",
-      },
-    }),
-    prisma.user.create({
-      data: {
-        username: "ahmed.saleh",
-        email: "ahmed.saleh@example.com",
-        password: await bcrypt.hash("123456", 10),
-        role: "AUTHOR",
-      },
-    }),
-    prisma.user.create({
-      data: {
-        username: "sara.ali",
-        email: "sara.ali@example.com",
-        password: await bcrypt.hash("123456", 10),
-        role: "USER",
-      },
-    }),
-    prisma.user.create({
-      data: {
-        username: "youssef.mahdy",
-        email: "youssef.mahdy@example.com",
-        password: await bcrypt.hash("123456", 10),
-        role: "USER",
-      },
-    }),
-  ]);
+  const passwordHash = await bcrypt.hash("123456", 10);
+  const usersToCreate = buildUsers(passwordHash);
 
-  const [mariam, ahmed, sara, youssef] = users;
+  await prisma.user.createMany({ data: usersToCreate });
 
-  const posts = await Promise.all([
-    prisma.post.create({
-      data: {
-        title: "How to Structure a Clean Express API",
-        content:
-          "A practical guide to keeping controllers thin, moving business logic into services, and validating inputs before they hit your database.",
-        published: true,
-        authorId: mariam.id,
-      },
-    }),
-    prisma.post.create({
-      data: {
-        title: "Why Prisma Makes Database Work Easier",
-        content:
-          "Prisma gives you a type-safe data layer, predictable migrations, and a better developer experience than raw SQL for most CRUD apps.",
-        published: true,
-        authorId: ahmed.id,
-      },
-    }),
-    prisma.post.create({
-      data: {
-        title: "Building Better Seed Data for Development",
-        content:
-          "Seed data should look realistic enough to exercise your UI, routes, and relations without feeling like placeholder demo content.",
-        published: false,
-        authorId: mariam.id,
-      },
-    }),
-    prisma.post.create({
-      data: {
-        title: "Common Mistakes When Handling IDs in Express",
-        content:
-          "Always validate route params and request body IDs before passing them to Prisma so invalid values become 400 errors instead of 500s.",
-        published: true,
-        authorId: ahmed.id,
-      },
-    }),
-  ]);
-
-  await prisma.comment.createMany({
-    data: [
-      {
-        content:
-          "This is exactly the kind of structure I was looking for. The controller example is clear and practical.",
-        postId: posts[0].id,
-        userId: sara.id,
-      },
-      {
-        content:
-          "Great breakdown. I especially like the validation-first approach before touching Prisma.",
-        postId: posts[0].id,
-        userId: youssef.id,
-      },
-      {
-        content:
-          "Prisma really does simplify a lot of the repetitive database work in CRUD APIs.",
-        postId: posts[1].id,
-        userId: mariam.id,
-      },
-      {
-        content:
-          "Would love to see a follow-up about relations and pagination in Prisma.",
-        postId: posts[1].id,
-        userId: sara.id,
-      },
-      {
-        content:
-          "This is useful for anyone setting up a development database with real-looking content.",
-        postId: posts[2].id,
-        userId: ahmed.id,
-      },
-      {
-        content:
-          "The ID validation advice saved me from a similar bug last week.",
-        postId: posts[3].id,
-        userId: youssef.id,
-      },
-    ],
+  const users = await prisma.user.findMany({
+    orderBy: { id: "asc" },
+    select: {
+      id: true,
+      role: true,
+    },
   });
 
+  const authors = users.filter((user) => user.role === "AUTHOR");
+
+  const postsToCreate = buildPosts(authors);
+  await prisma.post.createMany({ data: postsToCreate });
+
+  const posts = await prisma.post.findMany({
+    orderBy: { id: "asc" },
+    select: { id: true },
+  });
+
+  const commentsToCreate = buildComments(posts, users);
+  await prisma.comment.createMany({ data: commentsToCreate });
+
   console.log("Seed completed successfully.");
+  console.log(
+    `Created ${users.length} users, ${posts.length} posts, and ${commentsToCreate.length} comments.`,
+  );
 }
 
 main()

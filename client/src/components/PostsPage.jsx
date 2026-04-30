@@ -1,15 +1,26 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { api } from "../../api/api";
+import ConfirmDeleteModal from "./ConfirmDeleteModal";
 
 const PostsPage = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 5,
+    total: 0,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPrevPage: false,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [commentInputs, setCommentInputs] = useState({});
   const [editingComment, setEditingComment] = useState(null);
   const [editingContent, setEditingContent] = useState("");
+  const [deleteDialog, setDeleteDialog] = useState(null);
   const [authInfo, setAuthInfo] = useState(() => ({
     token: localStorage.getItem("token"),
     username: localStorage.getItem("username"),
@@ -83,10 +94,6 @@ const PostsPage = () => {
     setEditingContent("");
   };
   const handleDeleteComment = async (comment) => {
-    if (!window.confirm("Are you sure you want to delete this comment?")) {
-      return;
-    }
-
     try {
       await api.delete(`/comments/${comment.id}`, {
         headers: {
@@ -103,6 +110,20 @@ const PostsPage = () => {
     } catch (error) {
       alert(error.message || "Something went wrong");
     }
+  };
+
+  const openDeleteCommentDialog = (comment) => {
+    setDeleteDialog({
+      title: "Delete this comment?",
+      description:
+        "This will permanently remove the comment from the discussion thread.",
+      confirmLabel: "Delete comment",
+      onConfirm: () => handleDeleteComment(comment),
+    });
+  };
+
+  const closeDeleteDialog = () => {
+    setDeleteDialog(null);
   };
 
   const handleAddingComment = async (event, post) => {
@@ -150,10 +171,33 @@ const PostsPage = () => {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
-        const { data: res } = await api.get("/posts", {
+        const { data: res } = await api.get(`/posts?page=${page}&limit=5`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
-        setData(res.filter((post) => post.published));
+
+        if (Array.isArray(res)) {
+          setData(res);
+          setPagination({
+            page,
+            limit: 5,
+            total: res.length,
+            totalPages: 1,
+            hasNextPage: false,
+            hasPrevPage: page > 1,
+          });
+        } else {
+          setData(res.posts || []);
+          setPagination(
+            res.pagination || {
+              page,
+              limit: 5,
+              total: 0,
+              totalPages: 1,
+              hasNextPage: false,
+              hasPrevPage: page > 1,
+            },
+          );
+        }
       } catch (err) {
         setError(err.message);
       } finally {
@@ -162,7 +206,7 @@ const PostsPage = () => {
     };
 
     fetchData();
-  }, []);
+  }, [page]);
 
   if (loading) {
     return (
@@ -254,98 +298,126 @@ const PostsPage = () => {
             No posts found.
           </div>
         ) : (
-          <ul className="space-y-6">
-            {data.map((post) => (
-              <li
-                className="post-card rounded-3xl border border-line bg-white/80 p-5 shadow-md backdrop-blur md:p-6"
-                key={post.id}
-              >
-                <h2 className="font-display text-2xl leading-tight text-ink md:text-3xl">
-                  {post.title}
-                </h2>
-                <p className="mt-3 leading-relaxed text-ink-soft">
-                  {post.content}
-                </p>
-                <p className="mt-3 text-sm font-medium text-brand-copper">
-                  By {post.author.username}
-                </p>
-
-                <section className="mt-5 rounded-2xl border border-line bg-white/75 p-4">
-                  <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-ink-soft">
-                    Comments ({post.comments.length})
-                  </h3>
-                  <div className="mt-3 space-y-3">
-                    {post.comments.length === 0 ? (
-                      <p className="text-sm text-ink-soft">
-                        No comments yet. Be the first to reply.
-                      </p>
-                    ) : (
-                      post.comments.map((comment) => (
-                        <div
-                          key={comment.id}
-                          className="rounded-xl border border-line bg-paper p-3"
-                        >
-                          <p className="text-sm text-ink">{comment.content}</p>
-                          <p className="mt-1 text-xs font-medium uppercase tracking-[0.08em] text-brand-copper">
-                            By {comment.user?.username || "Unknown"}
-                          </p>
-
-                          {comment.user?.id === Number(authInfo.id) && (
-                            <div className="mt-3 flex gap-2">
-                              <button
-                                onClick={() => handleEditComment(comment)}
-                                className="flex-1 rounded-lg border border-brand-teal bg-brand-teal/10 px-3 py-1.5 text-sm font-semibold text-brand-teal transition hover:bg-brand-teal/20 active:scale-95"
-                              >
-                                ✏️ Edit
-                              </button>
-                              <button
-                                onClick={() => handleDeleteComment(comment)}
-                                className="flex-1 rounded-lg border border-red-400 bg-red-50/50 px-3 py-1.5 text-sm font-semibold text-red-600 transition hover:bg-red-100 active:scale-95"
-                              >
-                                🗑️ Delete
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </section>
-
-                <form
-                  className="mt-5"
-                  onSubmit={(event) => handleAddingComment(event, post)}
+          <>
+            <ul className="space-y-6">
+              {data.map((post) => (
+                <li
+                  className="post-card rounded-3xl border border-line bg-white/80 p-5 shadow-md backdrop-blur md:p-6"
+                  key={post.id}
                 >
-                  <label
-                    className="mb-2 block text-sm font-semibold text-ink"
-                    htmlFor={`comment-${post.id}`}
+                  <h2 className="font-display text-2xl leading-tight text-ink md:text-3xl">
+                    {post.title}
+                  </h2>
+                  <p className="mt-3 leading-relaxed text-ink-soft">
+                    {post.content}
+                  </p>
+                  <p className="mt-3 text-sm font-medium text-brand-copper">
+                    By {post.author.username}
+                  </p>
+
+                  <section className="mt-5 rounded-2xl border border-line bg-white/75 p-4">
+                    <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-ink-soft">
+                      Comments ({post.comments.length})
+                    </h3>
+                    <div className="mt-3 space-y-3">
+                      {post.comments.length === 0 ? (
+                        <p className="text-sm text-ink-soft">
+                          No comments yet. Be the first to reply.
+                        </p>
+                      ) : (
+                        post.comments.map((comment) => (
+                          <div
+                            key={comment.id}
+                            className="rounded-xl border border-line bg-paper p-3"
+                          >
+                            <p className="text-sm text-ink">
+                              {comment.content}
+                            </p>
+                            <p className="mt-1 text-xs font-medium uppercase tracking-[0.08em] text-brand-copper">
+                              By {comment.user?.username || "Unknown"}
+                            </p>
+
+                            {comment.user?.id === Number(authInfo.id) && (
+                              <div className="mt-3 flex gap-2">
+                                <button
+                                  onClick={() => handleEditComment(comment)}
+                                  className="flex-1 rounded-lg border border-brand-teal bg-brand-teal/10 px-3 py-1.5 text-sm font-semibold text-brand-teal transition hover:bg-brand-teal/20 active:scale-95"
+                                >
+                                  ✏️ Edit
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    openDeleteCommentDialog(comment)
+                                  }
+                                  className="flex-1 rounded-lg border border-red-400 bg-red-50/50 px-3 py-1.5 text-sm font-semibold text-red-600 transition hover:bg-red-100 active:scale-95"
+                                >
+                                  🗑️ Delete
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </section>
+
+                  <form
+                    className="mt-5"
+                    onSubmit={(event) => handleAddingComment(event, post)}
                   >
-                    Add a comment
-                  </label>
-                  <div className="flex flex-col gap-2 md:flex-row">
-                    <input
-                      className="min-h-11 flex-1 rounded-xl border border-line bg-white px-3 py-2 text-ink outline-none transition focus:border-brand-teal focus:ring-2 focus:ring-(--brand-teal)/25"
-                      type="text"
-                      id={`comment-${post.id}`}
-                      value={commentInputs[post.id] || ""}
-                      onChange={(event) =>
-                        setCommentInputs((prev) => ({
-                          ...prev,
-                          [post.id]: event.target.value,
-                        }))
-                      }
-                    />
-                    <button
-                      type="submit"
-                      className="min-h-11 rounded-xl bg-brand-teal px-4 py-2 font-semibold text-white transition hover:-translate-y-0.5 hover:brightness-95"
+                    <label
+                      className="mb-2 block text-sm font-semibold text-ink"
+                      htmlFor={`comment-${post.id}`}
                     >
-                      Add Comment
-                    </button>
-                  </div>
-                </form>
-              </li>
-            ))}
-          </ul>
+                      Add a comment
+                    </label>
+                    <div className="flex flex-col gap-2 md:flex-row">
+                      <input
+                        className="min-h-11 flex-1 rounded-xl border border-line bg-white px-3 py-2 text-ink outline-none transition focus:border-brand-teal focus:ring-2 focus:ring-(--brand-teal)/25"
+                        type="text"
+                        id={`comment-${post.id}`}
+                        value={commentInputs[post.id] || ""}
+                        onChange={(event) =>
+                          setCommentInputs((prev) => ({
+                            ...prev,
+                            [post.id]: event.target.value,
+                          }))
+                        }
+                      />
+                      <button
+                        type="submit"
+                        className="min-h-11 rounded-xl bg-brand-teal px-4 py-2 font-semibold text-white transition hover:-translate-y-0.5 hover:brightness-95"
+                      >
+                        Add Comment
+                      </button>
+                    </div>
+                  </form>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-8 flex items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                disabled={!pagination.hasPrevPage}
+                className="rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <span className="text-sm font-semibold text-ink-soft">
+                Page {pagination.page} of {pagination.totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPage((current) => current + 1)}
+                disabled={!pagination.hasNextPage}
+                className="rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          </>
         )}
       </div>
 
@@ -391,6 +463,23 @@ const PostsPage = () => {
           </div>
         </div>
       )}
+
+      <ConfirmDeleteModal
+        open={Boolean(deleteDialog)}
+        title={deleteDialog?.title || "Confirm deletion"}
+        description={
+          deleteDialog?.description || "This action cannot be undone."
+        }
+        confirmLabel={deleteDialog?.confirmLabel || "Delete"}
+        onCancel={closeDeleteDialog}
+        onConfirm={async () => {
+          const action = deleteDialog?.onConfirm;
+          closeDeleteDialog();
+          if (action) {
+            await action();
+          }
+        }}
+      />
     </div>
   );
 };

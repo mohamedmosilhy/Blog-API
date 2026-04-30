@@ -2,9 +2,20 @@ import React from "react";
 import { useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { api } from "../../api/api";
+import ConfirmDeleteModal from "./ConfirmDeleteModal";
 
 const MyPosts = () => {
   const [posts, setPosts] = React.useState([]);
+  const [page, setPage] = React.useState(1);
+  const [pagination, setPagination] = React.useState({
+    page: 1,
+    limit: 5,
+    total: 0,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPrevPage: false,
+  });
+  const [deleteDialog, setDeleteDialog] = React.useState(null);
   let navigate = useNavigate();
   const [authInfo, setAuthInfo] = React.useState(() => ({
     token: localStorage.getItem("token"),
@@ -81,12 +92,44 @@ const MyPosts = () => {
     }
   };
 
+  const openDeletePostDialog = (post) => {
+    setDeleteDialog({
+      title: `Delete \"${post.title}\"?`,
+      description:
+        "This will permanently remove the post and all of its comments.",
+      confirmLabel: "Delete post",
+      onConfirm: () => handleDelete(post.id),
+    });
+  };
+
+  const openDeleteCommentDialog = (post, comment) => {
+    setDeleteDialog({
+      title: "Delete this comment?",
+      description: `This comment belongs to ${comment.user?.username || "this post"} and will be removed immediately.`,
+      confirmLabel: "Delete comment",
+      onConfirm: () => handleDeleteComment(post.id, comment.id),
+    });
+  };
+
+  const closeDeleteDialog = () => {
+    setDeleteDialog(null);
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("username");
     localStorage.removeItem("role");
     setAuthInfo({ token: null, username: "", role: "" });
     setPosts([]);
+    setPage(1);
+    setPagination({
+      page: 1,
+      limit: 5,
+      total: 0,
+      totalPages: 1,
+      hasNextPage: false,
+      hasPrevPage: false,
+    });
   };
 
   useEffect(() => {
@@ -97,20 +140,45 @@ const MyPosts = () => {
       }
 
       try {
-        const { data: posts } = await api.get("/posts/my-posts", {
-          headers: {
-            Authorization: `Bearer ${authInfo.token}`,
+        const { data: res } = await api.get(
+          `/posts/my-posts?page=${page}&limit=5`,
+          {
+            headers: {
+              Authorization: `Bearer ${authInfo.token}`,
+            },
           },
-        });
+        );
 
-        setPosts(posts);
+        if (Array.isArray(res)) {
+          setPosts(res);
+          setPagination({
+            page,
+            limit: 5,
+            total: res.length,
+            totalPages: 1,
+            hasNextPage: false,
+            hasPrevPage: page > 1,
+          });
+        } else {
+          setPosts(res.posts || []);
+          setPagination(
+            res.pagination || {
+              page,
+              limit: 5,
+              total: 0,
+              totalPages: 1,
+              hasNextPage: false,
+              hasPrevPage: page > 1,
+            },
+          );
+        }
       } catch (error) {
         console.log(error);
       }
     };
 
     fetchPosts();
-  }, [authInfo.token]);
+  }, [authInfo.token, page]);
   return (
     <div className="page-shell">
       <div className="mx-auto max-w-5xl px-4 py-8 md:px-8 md:py-10 ">
@@ -127,7 +195,7 @@ const MyPosts = () => {
                 Manage content, publish updates, and keep your blog organized.
               </p>
               <div className="mt-4 inline-flex items-center rounded-full border border-line bg-white/80 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-ink-soft">
-                {posts.length} Post{posts.length === 1 ? "" : "s"} Loaded
+                {pagination.total} Post{pagination.total === 1 ? "" : "s"} Total
               </div>
             </div>
 
@@ -185,86 +253,113 @@ const MyPosts = () => {
             </div>
 
             {authInfo.token ? (
-              posts.map((post) => (
-                <div
-                  key={post.id}
-                  className="mt-6 rounded-2xl border border-line bg-white/70 p-4 shadow-sm"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="font-semibold text-ink ">{post.title}</h3>
-                    <div className="flex items-center gap-4">
-                      <p className="text-xs text-ink-soft italic">
-                        Published: {post.published ? "Yes" : "No"}
-                      </p>
-
-                      <button
-                        className="text-xs font-semibold text-brand-teal hover:text-brand-teal/80"
-                        onClick={() => navigate(`/edit-post/${post.id}`)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="text-xs font-semibold text-brand-teal hover:text-brand-teal/80"
-                        onClick={() => handleDelete(post.id)}
-                      >
-                        Delete
-                      </button>
-                      {post.published ? (
-                        <button
-                          onClick={() => handlePublish(post.id)}
-                          className="text-xs font-semibold text-brand-teal hover:text-brand-teal/80"
-                        >
-                          Unpublish
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handlePublish(post.id)}
-                          className="text-xs font-semibold text-brand-teal hover:text-brand-teal/80"
-                        >
-                          Publish
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="mt-4 border-t border-line pt-3">
-                    <p className="text-xs font-semibold uppercase tracking-widest text-ink-soft">
-                      Comments ({post.comments.length})
-                    </p>
-                    <div className="mt-2 space-y-2">
-                      {post.comments.length ? (
-                        post.comments.map((comment) => (
-                          <div
-                            key={comment.id}
-                            className="flex items-center justify-between rounded-xl border border-line bg-white/80 px-3 py-2"
-                          >
-                            <div>
-                              <p className="text-sm text-ink">
-                                {comment.content}
-                              </p>
-                              <p className="text-xs text-ink-soft">
-                                User: {comment.user?.username || "Unknown user"}
-                              </p>
-                            </div>
-                            <button
-                              onClick={() =>
-                                handleDeleteComment(post.id, comment.id)
-                              }
-                              className="text-xs font-semibold text-brand-copper hover:text-brand-copper/80"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-xs text-ink-soft">
-                          No comments yet.
+              <>
+                {posts.map((post) => (
+                  <div
+                    key={post.id}
+                    className="mt-6 rounded-2xl border border-line bg-white/70 p-4 shadow-sm"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="font-semibold text-ink ">{post.title}</h3>
+                      <div className="flex items-center gap-4">
+                        <p className="text-xs text-ink-soft italic">
+                          Published: {post.published ? "Yes" : "No"}
                         </p>
-                      )}
+
+                        <button
+                          className="text-xs font-semibold text-brand-teal hover:text-brand-teal/80"
+                          onClick={() => navigate(`/edit-post/${post.id}`)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="text-xs font-semibold text-brand-teal hover:text-brand-teal/80"
+                          onClick={() => openDeletePostDialog(post)}
+                        >
+                          Delete
+                        </button>
+                        {post.published ? (
+                          <button
+                            onClick={() => handlePublish(post.id)}
+                            className="text-xs font-semibold text-brand-teal hover:text-brand-teal/80"
+                          >
+                            Unpublish
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handlePublish(post.id)}
+                            className="text-xs font-semibold text-brand-teal hover:text-brand-teal/80"
+                          >
+                            Publish
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="mt-4 border-t border-line pt-3">
+                      <p className="text-xs font-semibold uppercase tracking-widest text-ink-soft">
+                        Comments ({post.comments.length})
+                      </p>
+                      <div className="mt-2 space-y-2">
+                        {post.comments.length ? (
+                          post.comments.map((comment) => (
+                            <div
+                              key={comment.id}
+                              className="flex items-center justify-between rounded-xl border border-line bg-white/80 px-3 py-2"
+                            >
+                              <div>
+                                <p className="text-sm text-ink">
+                                  {comment.content}
+                                </p>
+                                <p className="text-xs text-ink-soft">
+                                  User:{" "}
+                                  {comment.user?.username || "Unknown user"}
+                                </p>
+                              </div>
+                              <button
+                                onClick={() =>
+                                  openDeleteCommentDialog(post, comment)
+                                }
+                                className="text-xs font-semibold text-brand-copper hover:text-brand-copper/80"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-xs text-ink-soft">
+                            No comments yet.
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
+                ))}
+
+                <div className="mt-8 flex items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPage((current) => Math.max(1, current - 1))
+                    }
+                    disabled={!pagination.hasPrevPage}
+                    className="rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-sm font-semibold text-ink-soft">
+                    Page {pagination.page} of {pagination.totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setPage((current) => current + 1)}
+                    disabled={!pagination.hasNextPage}
+                    className="rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Next
+                  </button>
                 </div>
-              ))
+              </>
             ) : (
               <p className="mt-6 text-sm text-ink-soft">
                 Please log in to view your posts.
@@ -272,6 +367,23 @@ const MyPosts = () => {
             )}
           </div>
         </section>
+
+        <ConfirmDeleteModal
+          open={Boolean(deleteDialog)}
+          title={deleteDialog?.title || "Confirm deletion"}
+          description={
+            deleteDialog?.description || "This action cannot be undone."
+          }
+          confirmLabel={deleteDialog?.confirmLabel || "Delete"}
+          onCancel={closeDeleteDialog}
+          onConfirm={async () => {
+            const action = deleteDialog?.onConfirm;
+            closeDeleteDialog();
+            if (action) {
+              await action();
+            }
+          }}
+        />
       </div>
     </div>
   );

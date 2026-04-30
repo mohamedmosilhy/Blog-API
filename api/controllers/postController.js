@@ -11,26 +11,55 @@ const safeUserSelect = {
 module.exports = {
   getAllPostsClient: async (req, res) => {
     try {
-      const posts = await prisma.post.findMany({
-        where: { published: true },
-        include: {
-          author: {
-            select: safeUserSelect,
+      const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
+      const limit = Math.min(
+        50,
+        Math.max(1, Number.parseInt(req.query.limit, 10) || 5),
+      );
+      const skip = (page - 1) * limit;
+
+      const where = { published: true };
+
+      const [posts, total] = await prisma.$transaction([
+        prisma.post.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: {
+            createdAt: "desc",
           },
-          comments: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  username: true,
+          include: {
+            author: {
+              select: safeUserSelect,
+            },
+            comments: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    username: true,
+                  },
                 },
               },
             },
           },
+        }),
+        prisma.post.count({ where }),
+      ]);
+
+      const totalPages = Math.max(1, Math.ceil(total / limit));
+
+      res.send({
+        posts,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
         },
       });
-
-      res.send(posts);
     } catch (error) {
       res.status(500).send({ message: "Something Went Wrong" });
     }
@@ -39,31 +68,59 @@ module.exports = {
   getAllPostsAdmin: async (req, res) => {
     try {
       const authorId = Number.parseInt(req.user.userId, 10);
+      const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
+      const limit = Math.min(
+        50,
+        Math.max(1, Number.parseInt(req.query.limit, 10) || 5),
+      );
+      const skip = (page - 1) * limit;
 
       if (Number.isNaN(authorId)) {
         return res.status(400).send({ message: "Invalid author id" });
       }
 
-      const posts = await prisma.post.findMany({
-        where: { authorId },
-        include: {
-          author: {
-            select: safeUserSelect,
+      const where = { authorId };
+
+      const [posts, total] = await prisma.$transaction([
+        prisma.post.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: {
+            createdAt: "desc",
           },
-          comments: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  username: true,
+          include: {
+            author: {
+              select: safeUserSelect,
+            },
+            comments: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    username: true,
+                  },
                 },
               },
             },
           },
+        }),
+        prisma.post.count({ where }),
+      ]);
+
+      const totalPages = Math.max(1, Math.ceil(total / limit));
+
+      res.send({
+        posts,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
         },
       });
-
-      res.send(posts);
     } catch (error) {
       res.status(500).send({ message: "Something Went Wrong" });
     }
