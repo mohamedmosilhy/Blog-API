@@ -7,6 +7,7 @@ A modern blogging platform built with **Node.js**, **React**, **Express**, **Pri
 ---
 
 ## 🎬 Demo
+
 [https://github.com/mohamedmosilhy/Blog-API/blob/main/screenshots/demo.mp4](https://github.com/user-attachments/assets/fba4db24-95df-4810-a551-119a83b12fb5)
 
 ---
@@ -393,6 +394,20 @@ Blog-API/
 - Role-based access control on all endpoints
 - Input validation on client and server
 - SQL injection protection via Prisma ORM
+
+**Security & Production Notes**
+
+- **Rate limiting:** added route- and action-specific limits to reduce abuse. See `api/middleware/rateLimiters.js`.
+  - `authLimiter` — stricter login limiter (5 login attempts per minute).
+  - `commentLimiter` — comment creation limiter (10 comments per minute).
+  - A global limiter is also configured on the API to throttle general traffic (e.g. 100 requests / 15 minutes).
+
+- **Pagination:** server-side pagination implemented for public posts (`GET /posts`) and author posts (`GET /posts/my-posts`) using `page` and `limit` query parameters. API responses include a `pagination` object. Frontend UIs in `client` and `admin` were updated to use paged requests.
+
+- **Delete confirmations:** replaced native `confirm()` dialogs with a reusable styled modal on both frontends to avoid accidental deletions and improve UX. See `client/src/components/ConfirmDeleteModal.jsx` and `admin/src/components/ConfirmDeleteModal.jsx`.
+
+- **Disable source maps in production:** Vite configs for both frontends now disable source maps for production builds to avoid publishing original source mappings. See `client/vite.config.js` and `admin/vite.config.js` (build.sourcemap toggled by `mode === "production"`).
+
 
 ---
 
