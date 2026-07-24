@@ -2,7 +2,7 @@
 
 A modern blogging platform built with **Node.js**, **React**, **Express**, **Prisma**, and **PostgreSQL**. Features an admin dashboard for managing posts and comments, plus a public blog interface for readers.
 
-**Quick Links:** [Features](#-features) | [Setup](#-installation) | [API Docs](#-api-documentation) | [Learnings](#-what-ive-learned)
+**Quick Links:**  [Features](#-features) | [Setup](#-installation) | [API Docs](#-api-documentation) | [Learnings](#-what-ive-learned)
 
 ---
 
